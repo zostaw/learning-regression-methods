@@ -21,6 +21,10 @@ It contains:
 - k-NN
 - basic complexity reduction methods: Subset Selection, Ridge Regularization
 
+## ridge-regression-ellipsoids.ipynb
+
+Continuation of previous notebook. It visualizes how $\lambda$ penalty pulls/constrains $\hat{\beta}^{ridge}$ towards 0.  
+
 ## splines.rkt
 
 This is an extension of the notebook above.  
