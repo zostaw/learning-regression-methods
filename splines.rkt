@@ -297,33 +297,64 @@
     [0 0 12(x-ξ2)   (12x^3 - 18ξ2*x^2)   (12x^3 - 18(ξ1 + ξ2)*x^2 + 36ξ1*ξ2*x)   (12x^3 - 36ξ2*x^2 + 36ξ2^2*x)         ]]))
 ;; Same as above but in prefix notation:
 (define (Ω-antiderivative x)
-  (matrix
-   [[0 0 0 0 0 0]
-    [0 0 0 0 0 0]
-    [0 0 (* 4 x)                      (* 12 x)                   (* 12 (- x ξ1))                  (* 12 (- x ξ2))]
-    [0 0 (* 12 x)                     (* 12 (expt x 3))          (- (* 12 (expt x 3))
-                                                                    (* 18 ξ1 (expt x 2)))         (- (* 12 (expt x 3))
-                                                                                                     (* 18 ξ2 (expt x 2)))]
-    [0 0 (* 12 (- x ξ1))              (- (* 12 (expt x 3))
-                                         (* 18 ξ1 (expt x 2)))   (+ (- (* 12
-                                                                          (expt x 3))
-                                                                       (* 36 ξ1
-                                                                          (expt x 2)))
-                                                                    (* 36 (expt ξ1 2) x))         (+ (- (* 12 (expt x 3))
-                                                                                                        (* 18 (+ ξ1 ξ2)
-                                                                                                           (expt x 2)))
-                                                                                                     (* 36 ξ1 ξ2 x))]
-   [0 0 (* 12 (- x ξ2))               (- (* 12 (expt x 3))
-                                         (* 18 ξ2 (expt x 2)))   (+ (- (* 12 (expt x 3))
-                                                                       (* 18 (+ ξ1 ξ2)
-                                                                          (expt x 2)))
-                                                                    (* 36 ξ1 ξ2 x))               (+ (- (* 12 (expt x 3))
-                                                                                                        (* 36 ξ2 (expt x 2)))
-                                                                                                     (* 36 (expt ξ2 2) x))]]))
+  (define matrix-result (matrix
+                        [[0 0 0 0 0 0]
+                         [0 0 0 0 0 0]
+                         [0 0 (* 4 x)                      (* 12 x)                   (* 12 (- x ξ1))                  (* 12 (- x ξ2))]
+                         [0 0 (* 12 x)                     (* 12 (expt x 3))          (- (* 12 (expt x 3))
+                                                                                         (* 18 ξ1 (expt x 2)))         (- (* 12 (expt x 3))
+                                                                                                                          (* 18 ξ2 (expt x 2)))]
+                         [0 0 (* 12 (- x ξ1))              (- (* 12 (expt x 3))
+                                                              (* 18 ξ1 (expt x 2)))   (+ (- (* 12
+                                                                                               (expt x 3))
+                                                                                            (* 36 ξ1
+                                                                                               (expt x 2)))
+                                                                                         (* 36 (expt ξ1 2) x))         (+ (- (* 12 (expt x 3))
+                                                                                                                             (* 18 (+ ξ1 ξ2)
+                                                                                                                                (expt x 2)))
+                                                                                                                          (* 36 ξ1 ξ2 x))]
+                         [0 0 (* 12 (- x ξ2))               (- (* 12 (expt x 3))
+                                                               (* 18 ξ2 (expt x 2)))   (+ (- (* 12 (expt x 3))
+                                                                                             (* 18 (+ ξ1 ξ2)
+                                                                                                (expt x 2)))
+                                                                                          (* 36 ξ1 ξ2 x))               (+ (- (* 12 (expt x 3))
+                                                                                                                              (* 36 ξ2 (expt x 2)))
+                                                                                                                           (* 36 (expt ξ2 2) x))]]))
+  (λ (j k)
+      (matrix-ref matrix-result j k)))
+
+
+(define (Ω-element j k lower-bound upper-bound)
+  (let ([antiderivative-upper ((Ω-antiderivative upper-bound) j k)]
+        [antiderivative-lower ((Ω-antiderivative lower-bound) j k)])
+    (- antiderivative-upper antiderivative-lower)))
+
+; The problem is, integration bounds are different for Knot terms, we need to integrate each element of matrix separately
+(define (integration-bounds j k)
+  (cond
+    ; Both polynomial terms (0,1,2,3) - integrate over full range
+    [(and (<= j 3) (<= k 3)) (list DATA_MIN_X DATA_MAX_X)]
+    ; j=4 (ξ₁ knot), k=4 (ξ₁ knot)
+    [(and (= j 4) (= k 4)) (list ξ1 DATA_MAX_X)]
+    ; j=5 (ξ₂ knot), k=5 (ξ₂ knot)  
+    [(and (= j 5) (= k 5)) (list ξ2 DATA_MAX_X)]
+    ; j=4, k=5 or j=5, k=4 (cross-term between knots)
+    [(or (and (= j 4) (= k 5)) (and (= j 5) (= k 4))) 
+     (list (max ξ1 ξ2) DATA_MAX_X)]
+    ; Polynomial crossed with ξ₁ knot
+    [(or (and (<= j 3) (= k 4)) (and (= j 4) (<= k 3)))
+     (list ξ1 DATA_MAX_X)]
+    ; Polynomial crossed with ξ₂ knot
+    [(or (and (<= j 3) (= k 5)) (and (= j 5) (<= k 3)))
+     (list ξ2 DATA_MAX_X)]
+    [else (error "Unexpected j,k combination")]))
 
 (define Ω
-  (matrix- (Ω-antiderivative DATA_MAX_X)
-           (Ω-antiderivative DATA_MIN_X)))
+  (build-matrix 6 6
+    (λ (j k)
+      (let ([bounds (integration-bounds j k)])
+        (Ω-element j k (first bounds) (second bounds))))))
+
 
 
 (define (β^ lambda_)
@@ -337,6 +368,8 @@
 
 
 (define spline-4 (piecewise-spline-4 (β^ 0.0)))
+(define spline-4-smooth (piecewise-spline-4 (β^ 1.0)))
+(define spline-4-very-smooth (piecewise-spline-4 (β^ 10.0)))
 
 (cons
  (plot
@@ -355,13 +388,12 @@
  (list
   (function data-fun #:color "blue" #:label "True Function")
   (points noisy-data #:label "Real Data")
-  (function spline-4 #:color "red" #:label "Spline (M=4 aka Cubic)")
+  (function spline-4 #:color "red" #:label "Spline (M=4 aka Cubic) β=0.0")
+  ;(function spline-4-smooth #:color "red" #:label "Spline (M=4 aka Cubic) β=1.0")
+  ;(function spline-4-very-smooth #:color "red" #:label "Spline (M=4 aka Cubic) β=10.0")
   (vrule ξ1 #:style 'long-dash #:label "ξ1")
   (vrule ξ2 #:style 'long-dash #:label "ξ2"))
  #:y-min -0.7
  #:y-max 0.7))
-
-
-
 
 
