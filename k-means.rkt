@@ -539,6 +539,6 @@
 
 datapoints-combinations
 
-(for/list ([datapoints datapoints-combinations])
-  (gen-plot datapoints))
+(void (for/list ([datapoints datapoints-combinations])
+        (gen-plot datapoints)))
 
