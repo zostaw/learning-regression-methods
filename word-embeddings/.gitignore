@@ -1,0 +1,13 @@
+shakespeare.txt
+db.sqlite3
+text_words.pkl
+.ipynb_checkpoints
+__pycache__/
+.vscode/
+hf_*/
+build-dataset.py
+dataset/
+model-back.pth
+model-shakespare-back.pth
+model.pth
+

@@ -42,3 +42,15 @@ It contains (since racket doesn't have notebooks, attaching visuals):
 - Cubic Spline  
 ![splines_2.png](./splines_2.png)
 
+## cnn-disect.ipynb
+
+Visualization of CNN layers via filter maps and heatmaps.  
+
+## word-embeddings/
+
+CBOW implementation with animation visualizing the process of training.  
+
+## transformer.ipynb
+
+Implementation of classic transformer architecture in Jax. No training, just the model.  
+
