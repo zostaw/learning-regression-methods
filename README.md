@@ -50,6 +50,8 @@ Visualization of CNN layers via filter maps and heatmaps.
 
 CBOW implementation with animation visualizing the process of training.  
 
+![CBOW](./word-embeddings/resources/model_training_scheme.gif)
+
 ## transformer.ipynb
 
 Implementation of classic transformer architecture in Jax. No training, just the model.  
